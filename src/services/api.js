@@ -19,23 +19,22 @@ async function fetchAPI(endpoint, options = {}) {
   return response.json();
 }
 
-/**
- * Submit a score to the leaderboard
- */
 export async function submitRoundsScore(data) {
   return fetchAPI('/leaderboard/rounds', {
     method: 'POST',
     body: JSON.stringify({
       playerName: data.playerName,
       roundsSurvived: data.roundsSurvived,
-      bestWords: data.bestWords,
+      bestWords: data.bestWords || 0,
+      totalTimeSeconds: data.totalTimeSeconds,
     }),
   });
 }
 
-/**
- * Get the leaderboard (Top 50)
- */
-export async function getRoundsLeaderboard() {
-  return fetchAPI('/leaderboard/rounds');
+export async function getRoundsLeaderboard(page = 1) {
+  return fetchAPI(`/leaderboard/rounds?page=${page}`);
+}
+
+export async function getRank(roundsSurvived, totalTimeSeconds) {
+  return fetchAPI(`/leaderboard/rank?roundsSurvived=${roundsSurvived}&totalTimeSeconds=${totalTimeSeconds}`);
 }

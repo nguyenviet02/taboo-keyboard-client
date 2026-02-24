@@ -26,7 +26,7 @@ export function useScoreSubmission() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const submitScore = useCallback(async (playerName, roundsCleared, bestWords) => {
+  const submitScore = useCallback(async (playerName, roundsCleared, totalTimeSeconds) => {
     setSubmitting(true);
     setError(null);
 
@@ -34,7 +34,7 @@ export function useScoreSubmission() {
       await api.submitRoundsScore({
         playerName,
         roundsSurvived: roundsCleared,
-        bestWords: bestWords,
+        totalTimeSeconds,
       });
     } catch (err) {
       setError(err.message);

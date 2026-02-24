@@ -4,10 +4,12 @@ import GameScreen from './components/GameScreen/GameScreen';
 import GameOver from './components/GameOver/GameOver';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import { useGameLogic } from './hooks/useGameLogic';
-import { useScoreSubmission } from './hooks/useApi';
+import * as api from './services/api';
 
 function App() {
-  const [view, setView] = useState('home'); // 'home' | 'game' | 'gameOver' | 'leaderboard'
+  const [view, setView] = useState('home');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [rankInfo, setRankInfo] = useState(null);
   
   const {
     gameState,
@@ -21,11 +23,10 @@ function App() {
     feedback,
     isValidating,
     roundsCleared,
-    bestWordsInAnyRound,
     roundPassed,
     roundStats,
+    totalTimeSeconds,
     minWordsToPass,
-    bannedCount,
     startGame,
     nextRound,
     gameOver,
@@ -34,58 +35,73 @@ function App() {
     resetGame,
   } = useGameLogic();
 
-  const { submitting, error: submitError, submitScore } = useScoreSubmission();
-
   // Handle round end transitions
   useEffect(() => {
     if (gameState === 'roundEnd') {
       if (roundPassed) {
-        // Short delay before next round
-        const timer = setTimeout(() => {
+        const t = setTimeout(() => {
           nextRound();
         }, 1500);
-        return () => clearTimeout(timer);
+        return () => clearTimeout(t);
       } else {
-        // Game over
-        const timer = setTimeout(() => {
+        const t = setTimeout(async () => {
           gameOver();
+          
+          // Only calculate rank and save if player passed at least round 1
+          if (roundsCleared > 0) {
+            try {
+              const result = await api.getRank(roundsCleared, totalTimeSeconds);
+              setRankInfo(result);
+              
+              // Auto-submit if qualifies (rank <= 50)
+              if (result.qualifies) {
+                await api.submitRoundsScore({
+                  playerName,
+                  roundsSurvived: roundsCleared,
+                  totalTimeSeconds,
+                });
+              }
+            } catch (err) {
+              console.error('Failed to get rank:', err);
+              setRankInfo({ rank: 50, qualifies: false });
+            }
+          } else {
+            // Player didn't pass round 1, no rank, no save
+            setRankInfo({ rank: 0, qualifies: false });
+          }
+          
           setView('gameOver');
         }, 1500);
-        return () => clearTimeout(timer);
+        return () => clearTimeout(t);
       }
     }
-  }, [gameState, roundPassed, nextRound, gameOver]);
+  }, [gameState, roundPassed, nextRound, gameOver, roundsCleared, totalTimeSeconds, playerName]);
 
   const handleStartGame = useCallback((name) => {
+    setRankInfo(null);
     startGame(name);
     setView('game');
   }, [startGame]);
-
-  const handleSubmitScore = useCallback(async () => {
-    await submitScore(playerName, roundsCleared, bestWordsInAnyRound);
-  }, [submitScore, playerName, roundsCleared, bestWordsInAnyRound]);
 
   const handlePlayAgain = useCallback(() => {
     resetGame();
     setView('home');
   }, [resetGame]);
 
-  const handleViewLeaderboards = useCallback(() => {
-    setView('leaderboard');
+  const handleOpenLeaderboard = useCallback(() => {
+    setShowLeaderboard(true);
   }, []);
 
-  const handleBackToHome = useCallback(() => {
-    resetGame();
-    setView('home');
-  }, [resetGame]);
+  const handleCloseLeaderboard = useCallback(() => {
+    setShowLeaderboard(false);
+  }, []);
 
-  // Show round end overlay
   const showRoundEnd = gameState === 'roundEnd';
 
   return (
     <div className="min-h-screen bg-slate-900">
       {view === 'home' && (
-        <Home onStartGame={handleStartGame} onViewLeaderboards={handleViewLeaderboards} />
+        <Home onStartGame={handleStartGame} onViewLeaderboards={handleOpenLeaderboard} />
       )}
       
       {view === 'game' && (
@@ -121,21 +137,20 @@ function App() {
         </>
       )}
       
-      {view === 'gameOver' && (
+      {view === 'gameOver' && rankInfo && (
         <GameOver
           playerName={playerName}
           roundsCleared={roundsCleared}
-          bestWordsInAnyRound={bestWordsInAnyRound}
-          onSubmitScore={handleSubmitScore}
+          totalTimeSeconds={totalTimeSeconds}
+          rank={rankInfo.rank}
+          qualifies={rankInfo.qualifies}
           onPlayAgain={handlePlayAgain}
-          onViewLeaderboards={handleViewLeaderboards}
-          submitting={submitting}
-          error={submitError}
+          onViewLeaderboards={handleOpenLeaderboard}
         />
       )}
       
-      {view === 'leaderboard' && (
-        <Leaderboard onBack={handleBackToHome} />
+      {showLeaderboard && (
+        <Leaderboard onClose={handleCloseLeaderboard} />
       )}
     </div>
   );
