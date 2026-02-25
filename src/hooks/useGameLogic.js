@@ -1,25 +1,25 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { validateWord } from '../utils/wordValidator';
-import { selectBannedLetters, getMinWordsToPass } from '../utils/letterUtils';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { validateWord } from "../utils/wordValidator";
+import { selectBannedLetters, getMinWordsToPass } from "../utils/letterUtils";
 
-export const DEFAULT_ROUND_SECONDS = 25;
+export const DEFAULT_ROUND_SECONDS = 45;
 
 export function useGameLogic() {
-  const [gameState, setGameState] = useState('idle');
-  const [playerName, setPlayerName] = useState('');
+  const [gameState, setGameState] = useState("idle");
+  const [playerName, setPlayerName] = useState("");
   const [round, setRound] = useState(1);
   const [timer, setTimer] = useState(DEFAULT_ROUND_SECONDS);
   const [bannedLetters, setBannedLetters] = useState([]);
   const [acceptedWords, setAcceptedWords] = useState([]);
   const [allUsedWords, setAllUsedWords] = useState([]);
-  const [currentWord, setCurrentWord] = useState('');
+  const [currentWord, setCurrentWord] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [roundsCleared, setRoundsCleared] = useState(0);
   const [roundPassed, setRoundPassed] = useState(null);
   const [roundStats, setRoundStats] = useState(null);
   const [totalTimeSeconds, setTotalTimeSeconds] = useState(0);
-  
+
   const timerIntervalRef = useRef(null);
   const gameTimerRef = useRef(null);
   const previousBannedRef = useRef([]);
@@ -35,13 +35,15 @@ export function useGameLogic() {
 
   // Game time tracking - starts once when game begins
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === "playing") {
       if (!gameStartTimeRef.current) {
         gameStartTimeRef.current = Date.now();
       }
       gameTimerRef.current = setInterval(() => {
         if (gameStartTimeRef.current) {
-          const elapsed = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+          const elapsed = Math.floor(
+            (Date.now() - gameStartTimeRef.current) / 1000,
+          );
           setTotalTimeSeconds(elapsed);
         }
       }, 100);
@@ -56,21 +58,24 @@ export function useGameLogic() {
 
   // Round timer - uses real time to work even when tab is not focused
   useEffect(() => {
-    if (gameState === 'playing') {
-      roundEndTimeRef.current = Date.now() + (timer * 1000);
-      
+    if (gameState === "playing") {
+      roundEndTimeRef.current = Date.now() + timer * 1000;
+
       timerIntervalRef.current = setInterval(() => {
         const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((roundEndTimeRef.current - now) / 1000));
+        const remaining = Math.max(
+          0,
+          Math.ceil((roundEndTimeRef.current - now) / 1000),
+        );
         setTimer(remaining);
-        
+
         if (remaining === 0) {
           clearTimer();
           handleRoundEnd();
         }
       }, 100);
     }
-    
+
     return () => clearTimer();
   }, [gameState]);
 
@@ -79,13 +84,20 @@ export function useGameLogic() {
     const minWords = getMinWordsToPass(round);
     const passed = acceptedWords.length >= minWords;
     setRoundPassed(passed);
-    setRoundStats({ wordsSubmitted: acceptedWords.length, minRequired: minWords, passed });
-    if (passed) setRoundsCleared(r => r + 1);
-    setGameState('roundEnd');
+    setRoundStats({
+      wordsSubmitted: acceptedWords.length,
+      minRequired: minWords,
+      passed,
+    });
+    if (passed) setRoundsCleared((r) => r + 1);
+    setGameState("roundEnd");
   }, [round, acceptedWords, clearTimer]);
 
   useEffect(() => {
-    if (gameState === 'playing' && acceptedWords.length >= getMinWordsToPass(round)) {
+    if (
+      gameState === "playing" &&
+      acceptedWords.length >= getMinWordsToPass(round)
+    ) {
       handleRoundEnd();
     }
   }, [acceptedWords, gameState, round, handleRoundEnd]);
@@ -97,7 +109,7 @@ export function useGameLogic() {
     setAcceptedWords([]);
     setAllUsedWords([]);
     setRoundsCleared(0);
-    setCurrentWord('');
+    setCurrentWord("");
     setFeedback(null);
     setRoundPassed(null);
     setRoundStats(null);
@@ -107,7 +119,7 @@ export function useGameLogic() {
     const banned = selectBannedLetters(1, []);
     setBannedLetters(banned);
     previousBannedRef.current = banned;
-    setGameState('playing');
+    setGameState("playing");
   }, []);
 
   const nextRound = useCallback(() => {
@@ -115,23 +127,23 @@ export function useGameLogic() {
     setRound(newRound);
     setTimer(DEFAULT_ROUND_SECONDS);
     setAcceptedWords([]);
-    setCurrentWord('');
+    setCurrentWord("");
     setFeedback(null);
     setRoundPassed(null);
     setRoundStats(null);
     const banned = selectBannedLetters(newRound, previousBannedRef.current);
     setBannedLetters(banned);
     previousBannedRef.current = banned;
-    setGameState('playing');
+    setGameState("playing");
   }, [round]);
 
   const gameOver = useCallback(() => {
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
-    setGameState('gameOver');
+    setGameState("gameOver");
   }, []);
 
   const submitWord = useCallback(async () => {
-    if (!currentWord.trim() || isValidating || gameState !== 'playing') return;
+    if (!currentWord.trim() || isValidating || gameState !== "playing") return;
     const word = currentWord.trim();
     setIsValidating(true);
     setFeedback(null);
@@ -139,15 +151,21 @@ export function useGameLogic() {
       const result = await validateWord(word, bannedLetters, allUsedWords);
       if (result.valid) {
         const lowerWord = word.toLowerCase();
-        setAcceptedWords(words => [...words, lowerWord]);
-        setAllUsedWords(words => [...words, lowerWord]);
-        setCurrentWord('');
-        setFeedback({ type: 'success', message: result.fallbackMessage || `"${word}" accepted!` });
+        setAcceptedWords((words) => [...words, lowerWord]);
+        setAllUsedWords((words) => [...words, lowerWord]);
+        setCurrentWord("");
+        setFeedback({
+          type: "success",
+          message: result.fallbackMessage || `"${word}" accepted!`,
+        });
       } else {
-        setFeedback({ type: 'error', message: result.reason || 'Invalid word' });
+        setFeedback({
+          type: "error",
+          message: result.reason || "Invalid word",
+        });
       }
     } catch {
-      setFeedback({ type: 'error', message: 'Validation error. Try again.' });
+      setFeedback({ type: "error", message: "Validation error. Try again." });
     }
     setIsValidating(false);
     setTimeout(() => setFeedback(null), 2000);
@@ -156,14 +174,14 @@ export function useGameLogic() {
   const resetGame = useCallback(() => {
     clearTimer();
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
-    setGameState('idle');
-    setPlayerName('');
+    setGameState("idle");
+    setPlayerName("");
     setRound(1);
     setTimer(DEFAULT_ROUND_SECONDS);
     setBannedLetters([]);
     setAcceptedWords([]);
     setAllUsedWords([]);
-    setCurrentWord('');
+    setCurrentWord("");
     setFeedback(null);
     setRoundsCleared(0);
     setRoundPassed(null);
@@ -173,9 +191,26 @@ export function useGameLogic() {
   }, [clearTimer]);
 
   return {
-    gameState, playerName, round, timer, bannedLetters, acceptedWords, allUsedWords,
-    currentWord, feedback, isValidating, roundsCleared, roundPassed, roundStats,
-    totalTimeSeconds, minWordsToPass: getMinWordsToPass(round),
-    startGame, nextRound, gameOver, submitWord, setCurrentWord, resetGame,
+    gameState,
+    playerName,
+    round,
+    timer,
+    bannedLetters,
+    acceptedWords,
+    allUsedWords,
+    currentWord,
+    feedback,
+    isValidating,
+    roundsCleared,
+    roundPassed,
+    roundStats,
+    totalTimeSeconds,
+    minWordsToPass: getMinWordsToPass(round),
+    startGame,
+    nextRound,
+    gameOver,
+    submitWord,
+    setCurrentWord,
+    resetGame,
   };
 }
