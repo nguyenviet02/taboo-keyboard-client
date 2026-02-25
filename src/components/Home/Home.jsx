@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const STORAGE_KEY = 'taboo_keyboard_player_name';
 
 export default function Home({ onStartGame, onViewLeaderboards }) {
   const [playerName, setPlayerName] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setPlayerName(saved);
+    }
+  }, []);
+
+  const handleClearName = () => {
+    setPlayerName('');
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,6 +38,7 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
       return;
     }
     
+    localStorage.setItem(STORAGE_KEY, trimmed);
     onStartGame(trimmed);
   };
 
@@ -46,18 +61,30 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-xs">
         <label className="text-lg text-gray-400">Enter Your Name</label>
-        <input
-          type="text"
-          value={playerName}
-          onChange={(e) => {
-            setPlayerName(e.target.value);
-            setError('');
-          }}
-          placeholder="Your name"
-          maxLength={16}
-          autoFocus
-          className="p-3 text-xl border-2 border-gray-700 rounded-lg bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={playerName}
+            onChange={(e) => {
+              setPlayerName(e.target.value);
+              setError('');
+            }}
+            placeholder="Your name"
+            maxLength={16}
+            autoFocus
+            className="w-full p-3 pr-10 text-xl border-2 border-gray-700 rounded-lg bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors"
+          />
+          {playerName && (
+            <button
+              type="button"
+              onClick={handleClearName}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pink-400 transition-colors text-xl"
+              title="Clear saved name"
+            >
+              ×
+            </button>
+          )}
+        </div>
         
         {error && <span className="text-pink-400 text-sm">{error}</span>}
         

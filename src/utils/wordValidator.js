@@ -1,12 +1,12 @@
-import WORDLIST from './wordlist';
+import WORDLIST from "./wordlist";
 
-const API_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
+const API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/";
 
 // In-memory cache for current session
 const sessionCache = new Map();
 
 // LRU cache in localStorage (max 500 words)
-const LRU_KEY = 'taboo_word_cache';
+const LRU_KEY = "taboo_word_cache";
 const MAX_LRU_SIZE = 500;
 
 function getLRUCache() {
@@ -40,12 +40,12 @@ function setLRUCache(cache) {
 
 function getCachedWord(word) {
   const lower = word.toLowerCase();
-  
+
   // Check session cache first
   if (sessionCache.has(lower)) {
     return sessionCache.get(lower);
   }
-  
+
   // Check LRU cache
   const lru = getLRUCache();
   if (lru[lower]) {
@@ -55,16 +55,16 @@ function getCachedWord(word) {
     sessionCache.set(lower, lru[lower].valid);
     return lru[lower].valid;
   }
-  
+
   return null;
 }
 
 function setCachedWord(word, valid) {
   const lower = word.toLowerCase();
-  
+
   // Update session cache
   sessionCache.set(lower, valid);
-  
+
   // Update LRU cache
   const lru = getLRUCache();
   lru[lower] = { valid, timestamp: Date.now() };
@@ -85,51 +85,58 @@ function isInFallbackList(word) {
  */
 export async function validateWithAPI(word) {
   const lower = word.toLowerCase();
-  
+
   // Check cache first
   const cached = getCachedWord(lower);
   if (cached !== null) {
-    return { valid: cached, reason: cached ? '' : 'Not a valid English word', fromCache: true };
+    return {
+      valid: cached,
+      reason: cached ? "" : "Not a valid English word",
+      fromCache: true,
+    };
   }
-  
+
   try {
     const response = await fetch(`${API_URL}${lower}`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
+      method: "GET",
+      headers: { Accept: "application/json" },
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         setCachedWord(lower, true);
-        return { valid: true, reason: '', fromCache: false };
+        return { valid: true, reason: "", fromCache: false };
       }
     }
-    
+
     // 404 or invalid response means word not found
     setCachedWord(lower, false);
-    return { valid: false, reason: 'Not a valid English word', fromCache: false };
-    
+    return {
+      valid: false,
+      reason: "Not a valid English word",
+      fromCache: false,
+    };
   } catch (error) {
     // API unavailable - use fallback wordlist
     const inFallback = isInFallbackList(lower);
     setCachedWord(lower, inFallback);
-    
+
     if (inFallback) {
-      return { 
-        valid: true, 
-        reason: '', 
+      return {
+        valid: true,
+        reason: "",
         fromCache: false,
         fallback: true,
-        fallbackMessage: 'Dictionary check unavailable, using fallback list'
+        fallbackMessage: "Dictionary check unavailable, using fallback list",
       };
     }
-    
-    return { 
-      valid: false, 
-      reason: 'Not found in word list (API unavailable)', 
+
+    return {
+      valid: false,
+      reason: "Not found in word list (API unavailable)",
       fromCache: false,
-      fallback: true 
+      fallback: true,
     };
   }
 }
@@ -140,17 +147,20 @@ export async function validateWithAPI(word) {
  */
 function quickValidate(word, bannedLetters, acceptedWords) {
   const lower = word.toLowerCase();
-  
+
   // Check format: only letters A-Z
   if (!/^[a-zA-Z]+$/.test(word)) {
-    return { valid: false, reason: 'Only letters A-Z allowed (no spaces or special characters)' };
+    return {
+      valid: false,
+      reason: "Only letters A-Z allowed (no spaces or special characters)",
+    };
   }
-  
+
   // Check length
   if (word.length < 2) {
-    return { valid: false, reason: 'Word must be at least 2 letters' };
+    return { valid: false, reason: "Word must be at least 2 letters" };
   }
-  
+
   // Check for banned letters
   const upperWord = word.toUpperCase();
   for (const letter of bannedLetters) {
@@ -158,12 +168,12 @@ function quickValidate(word, bannedLetters, acceptedWords) {
       return { valid: false, reason: `Contains banned letter "${letter}"` };
     }
   }
-  
+
   // Check for duplicates
   if (acceptedWords.includes(lower)) {
-    return { valid: false, reason: 'Word already submitted this round' };
+    return { valid: false, reason: "Word already submitted" };
   }
-  
+
   return null; // Passes quick checks
 }
 
@@ -177,16 +187,16 @@ export async function validateWord(word, bannedLetters, acceptedWords) {
   if (quickResult) {
     return quickResult;
   }
-  
+
   // API validation
   const apiResult = await validateWithAPI(word);
-  
+
   return {
     valid: apiResult.valid,
     reason: apiResult.reason,
     fromCache: apiResult.fromCache,
     fallback: apiResult.fallback,
-    fallbackMessage: apiResult.fallbackMessage
+    fallbackMessage: apiResult.fallbackMessage,
   };
 }
 

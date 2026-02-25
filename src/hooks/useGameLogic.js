@@ -20,15 +20,16 @@ export function useGameLogic() {
   const [roundStats, setRoundStats] = useState(null);
   const [totalTimeSeconds, setTotalTimeSeconds] = useState(0);
   
-  const timerRef = useRef(null);
+  const timerIntervalRef = useRef(null);
   const gameTimerRef = useRef(null);
   const previousBannedRef = useRef([]);
   const gameStartTimeRef = useRef(null);
+  const roundEndTimeRef = useRef(null);
 
   const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
   }, []);
 
@@ -43,7 +44,7 @@ export function useGameLogic() {
           const elapsed = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
           setTotalTimeSeconds(elapsed);
         }
-      }, 1000);
+      }, 100);
     }
     return () => {
       if (gameTimerRef.current) {
@@ -53,14 +54,25 @@ export function useGameLogic() {
     };
   }, [gameState]);
 
+  // Round timer - uses real time to work even when tab is not focused
   useEffect(() => {
-    if (gameState === 'playing' && timer > 0) {
-      timerRef.current = setTimeout(() => setTimer(t => t - 1), 1000);
-      return () => clearTimer();
-    } else if (gameState === 'playing' && timer === 0) {
-      handleRoundEnd();
+    if (gameState === 'playing') {
+      roundEndTimeRef.current = Date.now() + (timer * 1000);
+      
+      timerIntervalRef.current = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((roundEndTimeRef.current - now) / 1000));
+        setTimer(remaining);
+        
+        if (remaining === 0) {
+          clearTimer();
+          handleRoundEnd();
+        }
+      }, 100);
     }
-  }, [gameState, timer]);
+    
+    return () => clearTimer();
+  }, [gameState]);
 
   const handleRoundEnd = useCallback(() => {
     clearTimer();
