@@ -17,7 +17,7 @@ export default function Leaderboard({ onClose }) {
 
     try {
       const apiUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+        import.meta.env.VITE_API_URL || "http://localhost:7001/api";
       const res = await fetch(`${apiUrl}/leaderboard/rounds?page=${pageNum}`);
 
       if (!res.ok) {
@@ -49,10 +49,10 @@ export default function Leaderboard({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-700">
+      <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-700">
         {/* Header with close button */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold bg-linear-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">
             Leaderboard
           </h1>
           <button
@@ -113,7 +113,7 @@ export default function Leaderboard({ onClose }) {
                       key={idx}
                       className={entry.rank <= 3 ? "bg-pink-500/10" : ""}
                     >
-                      <td className="py-2 px-2 font-bold text-center">
+                      <td className="py-2 px-2 font-bold text-center text-white">
                         {entry.rank === 1
                           ? "🥇"
                           : entry.rank === 2

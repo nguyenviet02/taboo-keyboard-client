@@ -46,11 +46,13 @@ export default function GameScreen({
           <span className="block text-2xl md:text-3xl font-bold">{round}</span>
         </div>
 
-        <div className={`text-center p-2 px-3 md:px-4 rounded-lg ${timerClass}`}>
-          <span className="block text-3xl md:text-4xl font-bold font-mono">{timer}</span>
-          <span className="block text-xs text-gray-400 uppercase">
-            seconds
+        <div
+          className={`text-center p-2 px-3 md:px-4 rounded-lg ${timerClass}`}
+        >
+          <span className="block text-3xl md:text-4xl font-bold font-mono">
+            {timer}
           </span>
+          <span className="block text-xs text-gray-400 uppercase">seconds</span>
         </div>
 
         <div className="text-center">
@@ -161,15 +163,13 @@ export default function GameScreen({
           </p>
           <div className="flex-1 overflow-y-auto">
             {allUsedWords.length === 0 ? (
-              <span className="text-gray-600 italic text-sm">
-                No words yet
-              </span>
+              <span className="text-gray-600 italic text-sm">No words yet</span>
             ) : (
-              <div className="flex flex-wrap md:flex-col gap-1">
+              <div className="flex flex-wrap gap-1">
                 {allUsedWords.map((word, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 bg-slate-700/50 text-gray-300 rounded text-xs md:text-sm"
+                    className="px-2 py-1 bg-slate-700/50 text-gray-300 rounded text-xs md:text-sm size-fit"
                   >
                     {word}
                   </span>
