@@ -8,6 +8,7 @@ async function fetchAPI(endpoint, options = {}) {
       "Content-Type": "application/json",
       ...options.headers,
     },
+    cache: "no-store",
     ...options,
   });
 
