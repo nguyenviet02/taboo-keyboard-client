@@ -55,8 +55,11 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
         <ul className="space-y-2 text-gray-300">
           <li>• Type valid English words before time runs out</li>
           <li>• Avoid using "taboo" (banned) letters shown each round</li>
-          <li>• Each 5 round requires 1 more words to pass</li>
-          <li>• 1 more letter get banned after every 5 rounds</li>
+          <li>
+            • Each 5 round 1 more letter get banned and requires 1 more words to
+            pass
+          </li>
+          <li>• Each 5 round timer increase by 10 seconds</li>
           <li>• Compete for most rounds survived!</li>
         </ul>
       </div>

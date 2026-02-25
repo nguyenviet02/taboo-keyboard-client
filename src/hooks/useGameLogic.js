@@ -2,7 +2,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { validateWord } from "../utils/wordValidator";
 import { selectBannedLetters, getMinWordsToPass } from "../utils/letterUtils";
 
-export const DEFAULT_ROUND_SECONDS = 45;
+const DEFAULT_ROUND_SECONDS = 30;
+
+// Timer: 30s for rounds 1-5, +10s every 5 rounds
+function getRoundTime(round) {
+  return DEFAULT_ROUND_SECONDS + Math.floor((round - 1) / 5) * 10;
+}
 
 export function useGameLogic() {
   const [gameState, setGameState] = useState("idle");
@@ -105,7 +110,7 @@ export function useGameLogic() {
   const startGame = useCallback((name) => {
     setPlayerName(name);
     setRound(1);
-    setTimer(DEFAULT_ROUND_SECONDS);
+    setTimer(getRoundTime(1));
     setAcceptedWords([]);
     setAllUsedWords([]);
     setRoundsCleared(0);
@@ -125,7 +130,7 @@ export function useGameLogic() {
   const nextRound = useCallback(() => {
     const newRound = round + 1;
     setRound(newRound);
-    setTimer(DEFAULT_ROUND_SECONDS);
+    setTimer(getRoundTime(newRound));
     setAcceptedWords([]);
     setCurrentWord("");
     setFeedback(null);
@@ -177,7 +182,7 @@ export function useGameLogic() {
     setGameState("idle");
     setPlayerName("");
     setRound(1);
-    setTimer(DEFAULT_ROUND_SECONDS);
+    setTimer(getRoundTime(1));
     setBannedLetters([]);
     setAcceptedWords([]);
     setAllUsedWords([]);

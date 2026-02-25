@@ -36,7 +36,7 @@ export default function GameScreen({
         : "bg-green-500/20";
 
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white flex flex-col max-w-6xl mx-auto">
+    <div className="min-h-screen p-4 md:p-6 bg-linear-to-br from-slate-900 to-slate-800 text-white flex flex-col max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center p-3 md:p-4 bg-white/5 rounded-xl mb-4 md:mb-6">
         <div className="text-center">
@@ -81,7 +81,7 @@ export default function GameScreen({
           {bannedLetters.map((letter) => (
             <span
               key={letter}
-              className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 text-xl md:text-2xl font-bold bg-gradient-to-br from-pink-500 to-rose-400 rounded-lg shadow-lg shadow-pink-500/30"
+              className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 text-xl md:text-2xl font-bold bg-linear-to-br from-pink-500 to-rose-400 rounded-lg shadow-lg shadow-pink-500/30"
             >
               {letter}
             </span>
@@ -109,7 +109,7 @@ export default function GameScreen({
         <button
           onClick={onSubmitWord}
           disabled={isValidating || !currentWord.trim()}
-          className="px-4 md:px-6 text-base md:text-lg font-bold border-none rounded-lg bg-gradient-to-r from-pink-500 to-rose-400 text-white cursor-pointer hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="px-4 md:px-6 text-base md:text-lg font-bold border-none rounded-lg bg-linear-to-r from-pink-500 to-rose-400 text-white cursor-pointer hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           {isValidating ? "..." : "Submit"}
         </button>
