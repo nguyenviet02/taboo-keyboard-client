@@ -5,13 +5,13 @@ const API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/";
 // In-memory cache for current session
 const sessionCache = new Map();
 
-// LRU cache in localStorage (max 500 words)
+// LRU cache in sessionStorage (max 500 words)
 const LRU_KEY = "taboo_word_cache";
 const MAX_LRU_SIZE = 500;
 
 function getLRUCache() {
   try {
-    const data = localStorage.getItem(LRU_KEY);
+    const data = sessionStorage.getItem(LRU_KEY);
     return data ? JSON.parse(data) : {};
   } catch {
     return {};
@@ -29,12 +29,12 @@ function setLRUCache(cache) {
       toKeep.forEach(([key, value]) => {
         newCache[key] = value;
       });
-      localStorage.setItem(LRU_KEY, JSON.stringify(newCache));
+      sessionStorage.setItem(LRU_KEY, JSON.stringify(newCache));
     } else {
-      localStorage.setItem(LRU_KEY, JSON.stringify(cache));
+      sessionStorage.setItem(LRU_KEY, JSON.stringify(cache));
     }
   } catch {
-    // localStorage might be full or disabled
+    // sessionStorage might be full or disabled
   }
 }
 
@@ -86,7 +86,18 @@ function isInFallbackList(word) {
 export async function validateWithAPI(word) {
   const lower = word.toLowerCase();
 
-  // Check cache first
+  const inFallback = isInFallbackList(lower);
+  if (inFallback) {
+    return {
+      valid: true,
+      reason: "",
+      fromCache: false,
+      fallback: true,
+      fallbackMessage: "",
+    };
+  }
+
+  // Check cache
   const cached = getCachedWord(lower);
   if (cached !== null) {
     return {
@@ -110,28 +121,12 @@ export async function validateWithAPI(word) {
       }
     }
 
-    // 404 or invalid response means word not found
-    setCachedWord(lower, false);
     return {
       valid: false,
       reason: "Not a valid English word",
       fromCache: false,
     };
   } catch (error) {
-    // API unavailable - use fallback wordlist
-    const inFallback = isInFallbackList(lower);
-    setCachedWord(lower, inFallback);
-
-    if (inFallback) {
-      return {
-        valid: true,
-        reason: "",
-        fromCache: false,
-        fallback: true,
-        fallbackMessage: "Dictionary check unavailable, using fallback list",
-      };
-    }
-
     return {
       valid: false,
       reason: "Not found in word list (API unavailable)",

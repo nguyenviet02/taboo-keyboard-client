@@ -7,7 +7,7 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       setPlayerName(saved);
     }
@@ -15,7 +15,7 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
 
   const handleClearName = () => {
     setPlayerName("");
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
   };
 
   const handleSubmit = (e) => {
@@ -38,7 +38,7 @@ export default function Home({ onStartGame, onViewLeaderboards }) {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, trimmed);
+    sessionStorage.setItem(STORAGE_KEY, trimmed);
     onStartGame(trimmed);
   };
 
