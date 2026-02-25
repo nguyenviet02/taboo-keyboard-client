@@ -38,8 +38,13 @@ export async function getRoundsLeaderboard(page = 1) {
   return fetchAPI(`/leaderboard/rounds?page=${page}`);
 }
 
-export async function getRank(roundsSurvived, totalTimeSeconds) {
-  return fetchAPI(
-    `/leaderboard/rank?roundsSurvived=${roundsSurvived}&totalTimeSeconds=${totalTimeSeconds}`,
-  );
+export async function getRank(roundsSurvived, totalTimeSeconds, playerName) {
+  const params = new URLSearchParams({
+    roundsSurvived,
+    totalTimeSeconds,
+  });
+  if (playerName) {
+    params.append("playerName", playerName);
+  }
+  return fetchAPI(`/leaderboard/rank?${params}`);
 }

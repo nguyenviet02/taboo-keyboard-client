@@ -6,6 +6,8 @@ export default function GameOver({
   totalTimeSeconds,
   rank,
   qualifies,
+  updated,
+  message,
   onPlayAgain,
   onViewLeaderboards,
 }) {
@@ -47,6 +49,15 @@ export default function GameOver({
             </div>
             <div className="text-sm text-gray-500">
               Pass round 1 to get on the leaderboard!
+            </div>
+          </div>
+        ) : qualifies && updated === false ? (
+          <div className="mb-6 p-4 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
+            <div className="text-2xl font-bold text-yellow-400 mb-1">
+              Rank #{rank}
+            </div>
+            <div className="text-sm text-gray-400">
+              Your existing score is better!
             </div>
           </div>
         ) : qualifies ? (

@@ -51,17 +51,20 @@ function App() {
           // Only calculate rank and save if player passed at least round 1
           if (roundsCleared > 0) {
             try {
-              const result = await api.getRank(roundsCleared, totalTimeSeconds);
-              setRankInfo(result);
-
+              const result = await api.getRank(roundsCleared, totalTimeSeconds, playerName);
+              
               // Auto-submit if qualifies (rank <= 50)
               if (result.qualifies) {
-                await api.submitRoundsScore({
+                const submitResult = await api.submitRoundsScore({
                   playerName,
                   roundsSurvived: roundsCleared,
                   totalTimeSeconds,
                 });
+                result.updated = submitResult.updated;
+                result.message = submitResult.message;
               }
+              
+              setRankInfo(result);
             } catch (err) {
               console.error("Failed to get rank:", err);
               setRankInfo({ rank: 50, qualifies: false });
@@ -163,6 +166,8 @@ function App() {
           totalTimeSeconds={totalTimeSeconds}
           rank={rankInfo.rank}
           qualifies={rankInfo.qualifies}
+          updated={rankInfo.updated}
+          message={rankInfo.message}
           onPlayAgain={handlePlayAgain}
           onViewLeaderboards={handleOpenLeaderboard}
         />
