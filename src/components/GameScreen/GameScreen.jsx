@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { handlePaste, markWordStart } from "../../utils/antiCheat";
 
 export default function GameScreen({
   round,
@@ -12,6 +13,7 @@ export default function GameScreen({
   isValidating,
   onWordChange,
   onSubmitWord,
+  onKeystroke,
 }) {
   const inputRef = useRef(null);
 
@@ -25,7 +27,16 @@ export default function GameScreen({
     if (e.key === "Enter" && !isValidating) {
       e.preventDefault();
       onSubmitWord();
+    } else if (e.key.length === 1) {
+      onKeystroke();
     }
+  };
+
+  const handleInputChange = (e) => {
+    if (!currentWord && e.target.value) {
+      markWordStart();
+    }
+    onWordChange(e.target.value);
   };
 
   const timerClass =
@@ -95,8 +106,9 @@ export default function GameScreen({
           ref={inputRef}
           type="text"
           value={currentWord}
-          onChange={(e) => onWordChange(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Type a word..."
           disabled={isValidating}
           className="flex-1 p-3 md:p-4 text-lg md:text-xl border-2 border-gray-700 rounded-lg bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors disabled:opacity-60"

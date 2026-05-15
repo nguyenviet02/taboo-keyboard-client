@@ -27,6 +27,7 @@ function App() {
     roundPassed,
     roundStats,
     totalTimeSeconds,
+    cheatingDetected,
     minWordsToPass,
     startGame,
     nextRound,
@@ -34,6 +35,7 @@ function App() {
     submitWord,
     setCurrentWord,
     resetGame,
+    recordKeystroke,
   } = useGameLogic();
 
   // Handle round end transitions
@@ -48,12 +50,10 @@ function App() {
         const t = setTimeout(async () => {
           gameOver();
 
-          // Only calculate rank and save if player passed at least round 1
-          if (roundsCleared > 0) {
+          if (roundsCleared > 0 && !cheatingDetected) {
             try {
               const result = await api.getRank(roundsCleared, totalTimeSeconds, playerName);
-              
-              // Auto-submit if qualifies (rank <= 50)
+
               if (result.qualifies) {
                 const submitResult = await api.submitRoundsScore({
                   playerName,
@@ -63,14 +63,13 @@ function App() {
                 result.updated = submitResult.updated;
                 result.message = submitResult.message;
               }
-              
+
               setRankInfo(result);
             } catch (err) {
               console.error("Failed to get rank:", err);
               setRankInfo({ rank: 50, qualifies: false });
             }
           } else {
-            // Player didn't pass round 1, no rank, no save
             setRankInfo({ rank: 0, qualifies: false });
           }
 
@@ -87,6 +86,7 @@ function App() {
     roundsCleared,
     totalTimeSeconds,
     playerName,
+    cheatingDetected,
   ]);
 
   const handleStartGame = useCallback(
@@ -136,6 +136,7 @@ function App() {
             isValidating={isValidating}
             onWordChange={setCurrentWord}
             onSubmitWord={submitWord}
+            onKeystroke={recordKeystroke}
           />
 
           {showRoundEnd && (
@@ -153,6 +154,27 @@ function App() {
                     {roundStats.wordsSubmitted}/{roundStats.minRequired} words
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {cheatingDetected && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-[60]">
+              <div className="text-center p-8 rounded-2xl bg-red-900/40 border-2 border-red-500 max-w-md mx-4">
+                <div className="text-5xl mb-4">⚠️</div>
+                <h2 className="text-2xl font-bold text-red-400 mb-3">
+                  Session Ended
+                </h2>
+                <p className="text-gray-300 mb-6">
+                  Unusual activity was detected. Your session has been
+                  terminated and your score will not be submitted.
+                </p>
+                <button
+                  onClick={handlePlayAgain}
+                  className="px-6 py-3 text-lg font-bold rounded-lg bg-linear-to-r from-pink-500 to-rose-400 text-white cursor-pointer hover:-translate-y-0.5 transition-all"
+                >
+                  Restart Game
+                </button>
               </div>
             </div>
           )}

@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { validateWord } from "../utils/wordValidator";
 import { selectBannedLetters, getMinWordsToPass } from "../utils/letterUtils";
+import {
+  startAntiCheat,
+  stopAntiCheat,
+  resetAntiCheat,
+  onViolation,
+  isOverThreshold,
+  recordKeystroke,
+  markWordStart,
+  checkTypingPattern,
+} from "../utils/antiCheat";
 
 const DEFAULT_ROUND_SECONDS = 30;
 
@@ -24,12 +34,33 @@ export function useGameLogic() {
   const [roundPassed, setRoundPassed] = useState(null);
   const [roundStats, setRoundStats] = useState(null);
   const [totalTimeSeconds, setTotalTimeSeconds] = useState(0);
+  const [cheatingDetected, setCheatingDetected] = useState(false);
 
   const timerIntervalRef = useRef(null);
   const gameTimerRef = useRef(null);
   const previousBannedRef = useRef([]);
   const gameStartTimeRef = useRef(null);
   const roundEndTimeRef = useRef(null);
+
+  // Anti-cheat violation listener
+  useEffect(() => {
+    const unsubscribe = onViolation(() => {
+      if (isOverThreshold()) {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+        if (gameTimerRef.current) {
+          clearInterval(gameTimerRef.current);
+          gameTimerRef.current = null;
+        }
+        stopAntiCheat();
+        setCheatingDetected(true);
+        setGameState("cheating");
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -119,11 +150,13 @@ export function useGameLogic() {
     setRoundPassed(null);
     setRoundStats(null);
     setTotalTimeSeconds(0);
+    setCheatingDetected(false);
     previousBannedRef.current = [];
     gameStartTimeRef.current = null;
     const banned = selectBannedLetters(1, []);
     setBannedLetters(banned);
     previousBannedRef.current = banned;
+    startAntiCheat();
     setGameState("playing");
   }, []);
 
@@ -144,11 +177,15 @@ export function useGameLogic() {
 
   const gameOver = useCallback(() => {
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
+    stopAntiCheat();
     setGameState("gameOver");
   }, []);
 
   const submitWord = useCallback(async () => {
     if (!currentWord.trim() || isValidating || gameState !== "playing") return;
+
+    if (checkTypingPattern()) return;
+
     const word = currentWord.trim();
     setIsValidating(true);
     setFeedback(null);
@@ -173,12 +210,14 @@ export function useGameLogic() {
       setFeedback({ type: "error", message: "Validation error. Try again." });
     }
     setIsValidating(false);
+    markWordStart();
     setTimeout(() => setFeedback(null), 2000);
   }, [currentWord, isValidating, gameState, bannedLetters, allUsedWords]);
 
   const resetGame = useCallback(() => {
     clearTimer();
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
+    resetAntiCheat();
     setGameState("idle");
     setPlayerName("");
     setRound(1);
@@ -192,6 +231,7 @@ export function useGameLogic() {
     setRoundPassed(null);
     setRoundStats(null);
     setTotalTimeSeconds(0);
+    setCheatingDetected(false);
     gameStartTimeRef.current = null;
   }, [clearTimer]);
 
@@ -210,6 +250,7 @@ export function useGameLogic() {
     roundPassed,
     roundStats,
     totalTimeSeconds,
+    cheatingDetected,
     minWordsToPass: getMinWordsToPass(round),
     startGame,
     nextRound,
@@ -217,5 +258,6 @@ export function useGameLogic() {
     submitWord,
     setCurrentWord,
     resetGame,
+    recordKeystroke,
   };
 }
